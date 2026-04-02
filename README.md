@@ -47,6 +47,10 @@ Each product has a "Order via WhatsApp" button that:
 - **Font Awesome** - Icons
 - **WhatsApp API** - Order integration
 
+## 🌐 Live Website
+
+**Deployed on GitHub Pages:** https://khukurikhoda.github.io/Handcraft-Haven-Website
+
 ---
 
 Made with ❤️ for handcrafted artisans
