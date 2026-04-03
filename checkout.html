@@ -205,6 +205,21 @@
             opacity: 0.5;
         }
 
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            transition: color 0.3s ease;
+        }
+
+        .form-group input:focus + i,
+        .form-group textarea:focus + i {
+            color: var(--primary-color);
+        }
+
         .error-message {
             color: var(--error-color);
             font-size: 0.9rem;
@@ -327,20 +342,47 @@
                             <form id="checkoutForm">
                                 <div class="form-group">
                                     <label for="name">Full Name *</label>
-                                    <input type="text" id="name" name="name" required>
+                                    <div class="input-group">
+                                        <i class="fas fa-user"></i>
+                                        <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                                    </div>
                                     <span class="error-message">Please enter your full name</span>
                                 </div>
 
                                 <div class="form-group">
+                                    <label for="email">Email Address *</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-envelope"></i>
+                                        <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
+                                    </div>
+                                    <span class="error-message">Please enter a valid email address</span>
+                                </div>
+
+                                <div class="form-group">
                                     <label for="phone">Phone Number *</label>
-                                    <input type="tel" id="phone" name="phone" placeholder="+977-XXXXXXXXX" required>
+                                    <div class="input-group">
+                                        <i class="fas fa-phone"></i>
+                                        <input type="tel" id="phone" name="phone" placeholder="+977-98XXXXXXXXX" required>
+                                    </div>
                                     <span class="error-message">Please enter a valid phone number</span>
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="address">Delivery Address *</label>
-                                    <textarea id="address" name="address" placeholder="Enter your complete delivery address" required></textarea>
-                                    <span class="error-message">Please enter your delivery address</span>
+                                    <label for="street">Street Address *</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-home"></i>
+                                        <input type="text" id="street" name="street" placeholder="Enter your street address" required>
+                                    </div>
+                                    <span class="error-message">Please enter your street address</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="address">Delivery Address (Complete)</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <textarea id="address" name="address" placeholder="Include street, city, and area code" required></textarea>
+                                    </div>
+                                    <span class="error-message">Please enter your complete delivery address</span>
                                 </div>
                             </form>
                         </div>
@@ -385,7 +427,7 @@
             }
 
             validateField(field) {
-                const formGroup = field.parentElement;
+                const formGroup = field.closest('.form-group');
                 const value = field.value.trim();
 
                 formGroup.classList.remove('error');
@@ -393,6 +435,14 @@
                 if (!value) {
                     formGroup.classList.add('error');
                     return false;
+                }
+
+                if (field.type === 'email') {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value)) {
+                        formGroup.classList.add('error');
+                        return false;
+                    }
                 }
 
                 if (field.type === 'tel') {
@@ -408,7 +458,7 @@
 
             validateForm() {
                 const form = document.getElementById('checkoutForm');
-                const inputs = form.querySelectorAll('input, textarea');
+                const inputs = form.querySelectorAll('input[required], textarea[required]');
                 let isValid = true;
 
                 inputs.forEach(input => {
@@ -428,7 +478,9 @@
 
                 const formData = {
                     name: document.getElementById('name').value.trim(),
+                    email: document.getElementById('email').value.trim(),
                     phone: document.getElementById('phone').value.trim(),
+                    street: document.getElementById('street').value.trim(),
                     address: document.getElementById('address').value.trim()
                 };
 
@@ -451,7 +503,9 @@
 
 👤 *Customer Details:*
 Name: ${customerDetails.name}
+Email: ${customerDetails.email}
 Phone: ${customerDetails.phone}
+Street: ${customerDetails.street}
 Address: ${customerDetails.address}
 
 📦 *Order Details:*
@@ -462,6 +516,8 @@ ${itemsList}
 📍 *Delivery Address:* ${customerDetails.address}
 
 📞 *Contact:* ${customerDetails.phone}
+
+📧 *Email:* ${customerDetails.email}
 
 Thank you for your order! 🎉`;
                 
