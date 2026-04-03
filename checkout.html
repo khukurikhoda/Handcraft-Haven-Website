@@ -193,33 +193,6 @@
             color: var(--primary-color);
         }
 
-        .empty-checkout {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-secondary);
-        }
-
-        .empty-checkout i {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .input-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            transition: color 0.3s ease;
-        }
-
-        .form-group input:focus + i,
-        .form-group textarea:focus + i {
-            color: var(--primary-color);
-        }
-
         .error-message {
             color: var(--error-color);
             font-size: 0.9rem;
@@ -300,505 +273,249 @@
             </div>
 
             <div id="checkoutContent">
-                <!-- Content will be dynamically loaded -->
+                <!-- Content will be loaded here -->
             </div>
         </div>
     </section>
 
     <script>
-        // Shopping Cart Class Definition
-        class ShoppingCart {
-            constructor() {
-                this.items = JSON.parse(localStorage.getItem('cart')) || [];
-                this.cartCount = document.getElementById('cartCount');
-                this.cartItems = document.getElementById('cartItems');
-                this.totalPrice = document.getElementById('totalPrice');
-                this.cartSidebar = document.getElementById('cartSidebar');
-                this.overlay = document.getElementById('overlay');
-                
-                this.updateCartUI();
+        // Global cart data - fallback if sessionStorage is empty
+        let cartData = [];
+
+        // Try to get cart from sessionStorage first
+        try {
+            const sessionCart = sessionStorage.getItem('cart');
+            if (sessionCart) {
+                cartData = JSON.parse(sessionCart);
             }
-
-            addItem(name, price) {
-                const existingItem = this.items.find(item => item.name === name);
-                
-                if (existingItem) {
-                    existingItem.quantity += 1;
-                } else {
-                    this.items.push({
-                        id: Date.now(),
-                        name: name,
-                        price: price,
-                        quantity: 1
-                    });
-                }
-                
-                this.saveCart();
-                this.updateCartUI();
-                this.showNotification(`${name} added to cart!`);
-            }
-
-            removeItem(id) {
-                this.items = this.items.filter(item => item.id !== id);
-                this.saveCart();
-                this.updateCartUI();
-            }
-
-            updateQuantity(id, quantity) {
-                const item = this.items.find(item => item.id === id);
-                if (item) {
-                    item.quantity = parseInt(quantity);
-                    if (item.quantity <= 0) {
-                        this.removeItem(id);
-                    } else {
-                        this.saveCart();
-                        this.updateCartUI();
-                    }
-                }
-            }
-
-            getTotal() {
-                return this.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-            }
-
-            saveCart() {
-                localStorage.setItem('cart', JSON.stringify(this.items));
-            }
-
-            updateCartUI() {
-                // Update cart count
-                const totalItems = this.items.reduce((total, item) => total + item.quantity, 0);
-                this.cartCount.textContent = totalItems;
-
-                // Update cart items
-                if (this.items.length === 0) {
-                    this.cartItems.innerHTML = `
-                        <div class="empty-cart">
-                            <i class="fas fa-shopping-cart"></i>
-                            <p>Your cart is empty</p>
-                        </div>
-                    `;
-                } else {
-                    this.cartItems.innerHTML = this.items.map(item => `
-                        <div class="cart-item">
-                            <div class="cart-item-info">
-                                <div class="cart-item-name">${item.name}</div>
-                                <div class="cart-item-price">NPR ${item.price}</div>
-                                <div class="quantity-controls">
-                                    <button class="quantity-btn" onclick="cart.updateQuantity(${item.id}, ${item.quantity - 1})">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                    <span class="quantity-value">${item.quantity}</span>
-                                    <button class="quantity-btn" onclick="cart.updateQuantity(${item.id}, ${item.quantity + 1})">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <button class="remove-item" onclick="cart.removeItem(${item.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    `).join('');
-                }
-
-                // Update total price
-                this.totalPrice.textContent = `NPR ${this.getTotal()}`;
-            }
-
-            openCart() {
-                this.cartSidebar.classList.add('open');
-                this.overlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-
-            closeCart() {
-                this.cartSidebar.classList.remove('open');
-                this.overlay.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-
-            showNotification(message) {
-                const notification = document.createElement('div');
-                notification.className = 'notification';
-                notification.textContent = message;
-                
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 100px;
-                    right: 20px;
-                    background: linear-gradient(135deg, #22c55e, #16a34a);
-                    color: white;
-                    padding: 15px 25px;
-                    border-radius: 10px;
-                    box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
-                    z-index: 10000;
-                    font-weight: 600;
-                    animation: slideIn 0.3s ease-out;
-                    max-width: 300px;
-                `;
-                
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.style.animation = 'slideOut 0.3s ease-out';
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 300);
-                }, 3000);
-            }
+        } catch (e) {
+            console.log('SessionStorage not available, using fallback');
         }
 
-        // Checkout Page Specific JavaScript
-        class CheckoutPage {
-            constructor() {
-                this.cart = new ShoppingCart();
-                this.checkoutContent = document.getElementById('checkoutContent');
-                this.init();
-            }
-
-            init() {
-                this.loadCheckoutContent();
-                this.setupThemeToggle();
-            }
-
-            loadCheckoutContent() {
-                const cartItems = JSON.parse(localStorage.getItem('cart')) || [];
-                
-                // Debug: Log cart items to console
-                console.log('Cart items loaded:', cartItems);
-                console.log('Cart items length:', cartItems.length);
-                
-                // TEMPORARY: Add test items if cart is empty (for testing)
-                if (cartItems.length === 0) {
-                    console.log('Cart is empty, showing form anyway for testing');
-                    // Show form even if cart is empty for testing
-                    this.checkoutContent.innerHTML = `
-                        <div class="checkout-content">
-                            <div class="checkout-form">
-                                <h2>Delivery Information</h2>
-                                <form id="checkoutForm">
-                                    <div class="form-group">
-                                        <label for="name">Full Name *</label>
-                                        <input type="text" id="name" name="name" placeholder="Enter your full name" required>
-                                        <span class="error-message">Please enter your full name</span>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="phone">Phone Number *</label>
-                                        <input type="tel" id="phone" name="phone" placeholder="+977-98XXXXXXXXX" required>
-                                        <span class="error-message">Please enter a valid phone number</span>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="address">Delivery Address *</label>
-                                        <textarea id="address" name="address" placeholder="Enter your complete delivery address" required></textarea>
-                                        <span class="error-message">Please enter your delivery address</span>
-                                    </div>
-                                </form>
-                            </div>
-
-                            <div class="order-summary">
-                                <h2>Order Summary</h2>
-                                <div class="order-items">
-                                    <div class="order-item">
-                                        <span class="order-item-name">Test Item - Add items from main page</span>
-                                        <span class="order-item-price">NPR 0</span>
-                                    </div>
-                                </div>
-                                <div class="order-total">
-                                    <span>Total:</span>
-                                    <span class="total-price">NPR 0</span>
-                                </div>
-                                <button class="confirm-btn" onclick="checkoutPage.confirmOrder()">
-                                    <i class="fab fa-whatsapp"></i>
-                                    Confirm Order via WhatsApp
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    this.setupFormValidation();
-                    return;
-                }
-
-                this.checkoutContent.innerHTML = `
-                    <div class="checkout-content">
-                        <div class="checkout-form">
-                            <h2>Delivery Information</h2>
-                            <form id="checkoutForm">
-                                <div class="form-group">
-                                    <label for="name">Full Name *</label>
-                                    <div class="input-group">
-                                        <i class="fas fa-user"></i>
-                                        <input type="text" id="name" name="name" placeholder="Enter your full name" required>
-                                    </div>
-                                    <span class="error-message">Please enter your full name</span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="email">Email Address *</label>
-                                    <div class="input-group">
-                                        <i class="fas fa-envelope"></i>
-                                        <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
-                                    </div>
-                                    <span class="error-message">Please enter a valid email address</span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="phone">Phone Number *</label>
-                                    <div class="input-group">
-                                        <i class="fas fa-phone"></i>
-                                        <input type="tel" id="phone" name="phone" placeholder="+977-98XXXXXXXXX" required>
-                                    </div>
-                                    <span class="error-message">Please enter a valid phone number</span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="street">Street Address *</label>
-                                    <div class="input-group">
-                                        <i class="fas fa-home"></i>
-                                        <input type="text" id="street" name="street" placeholder="Enter your street address" required>
-                                    </div>
-                                    <span class="error-message">Please enter your street address</span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="address">Delivery Address (Complete)</label>
-                                    <div class="input-group">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <textarea id="address" name="address" placeholder="Include street, city, and area code" required></textarea>
-                                    </div>
-                                    <span class="error-message">Please enter your complete delivery address</span>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="order-summary">
-                            <h2>Order Summary</h2>
-                            <div class="order-items">
-                                ${cartItems.map(item => `
-                                    <div class="order-item">
-                                        <span class="order-item-name">${item.name} x${item.quantity}</span>
-                                        <span class="order-item-price">NPR ${item.price * item.quantity}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            <div class="order-total">
-                                <span>Total:</span>
-                                <span class="total-price">NPR ${this.cart.getTotal()}</span>
-                            </div>
-                            <button class="confirm-btn" onclick="checkoutPage.confirmOrder()">
-                                <i class="fab fa-whatsapp"></i>
-                                Confirm Order via WhatsApp
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                this.setupFormValidation();
-            }
-
-            setupFormValidation() {
-                const form = document.getElementById('checkoutForm');
-                const inputs = form.querySelectorAll('input, textarea');
-
-                inputs.forEach(input => {
-                    input.addEventListener('blur', () => this.validateField(input));
-                    input.addEventListener('input', () => {
-                        if (input.parentElement.classList.contains('error')) {
-                            this.validateField(input);
-                        }
-                    });
-                });
-            }
-
-            validateField(field) {
-                const formGroup = field.closest('.form-group');
-                const value = field.value.trim();
-
-                formGroup.classList.remove('error');
-
-                if (!value) {
-                    formGroup.classList.add('error');
-                    return false;
-                }
-
-                if (field.type === 'email') {
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(value)) {
-                        formGroup.classList.add('error');
-                        return false;
-                    }
-                }
-
-                if (field.type === 'tel') {
-                    const phoneRegex = /^(\+977[-\s]?)?98\d{8}$/;
-                    if (!phoneRegex.test(value.replace(/[\s-]/g, ''))) {
-                        formGroup.classList.add('error');
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            validateForm() {
-                const form = document.getElementById('checkoutForm');
-                const inputs = form.querySelectorAll('input[required], textarea[required]');
-                let isValid = true;
-
-                inputs.forEach(input => {
-                    if (!this.validateField(input)) {
-                        isValid = false;
-                    }
-                });
-
-                return isValid;
-            }
-
-            confirmOrder() {
-                if (!this.validateForm()) {
-                    this.showError('Please fill in all required fields correctly');
-                    return;
-                }
-
-                const formData = {
-                    name: document.getElementById('name').value.trim(),
-                    email: document.getElementById('email').value.trim(),
-                    phone: document.getElementById('phone').value.trim(),
-                    street: document.getElementById('street').value.trim(),
-                    address: document.getElementById('address').value.trim()
-                };
-
-                const cartItems = JSON.parse(localStorage.getItem('cart')) || [];
-
-                // Send order via WhatsApp
-                this.sendWhatsAppOrder(formData, cartItems);
-            }
-
-            sendWhatsAppOrder(customerDetails, orderItems) {
-                const phoneNumber = '+9779847244773';
-                
-                const itemsList = orderItems.map(item => 
-                    `🛍️ ${item.name} x${item.quantity} - NPR ${item.price * item.quantity}`
-                ).join('\n');
-                
-                const totalAmount = orderItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-                
-                const message = `🛒 *NEW ORDER - Handcraft Haven*
-
-👤 *Customer Details:*
-Name: ${customerDetails.name}
-Email: ${customerDetails.email}
-Phone: ${customerDetails.phone}
-Street: ${customerDetails.street}
-Address: ${customerDetails.address}
-
-📦 *Order Details:*
-${itemsList}
-
-💰 *Total Amount:* NPR ${totalAmount}
-
-📍 *Delivery Address:* ${customerDetails.address}
-
-📞 *Contact:* ${customerDetails.phone}
-📧 *Email:* ${customerDetails.email}
-
-Thank you for your order! 🎉`;
-                
-                const encodedMessage = encodeURIComponent(message);
-                const whatsappUrl = `https://wa.me/${phoneNumber.replace('+', '')}?text=${encodedMessage}`;
-                
-                // Clear cart after successful order
-                localStorage.removeItem('cart');
-                
-                // Open WhatsApp
-                window.open(whatsappUrl, '_blank');
-                
-                // Redirect to home after a delay
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 2000);
-            }
-
-            showError(message) {
-                const notification = document.createElement('div');
-                notification.className = 'notification';
-                notification.textContent = message;
-                
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 100px;
-                    right: 20px;
-                    background: linear-gradient(135deg, #ef4444, #dc2626);
-                    color: white;
-                    padding: 15px 25px;
-                    border-radius: 10px;
-                    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
-                    z-index: 10000;
-                    font-weight: 600;
-                    animation: slideIn 0.3s ease-out;
-                    max-width: 300px;
-                `;
-                
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.style.animation = 'slideOut 0.3s ease-out';
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 300);
-                }, 3000);
-            }
-
-            setupThemeToggle() {
-                const themeToggle = document.getElementById('themeToggle');
-                const themeIcon = document.getElementById('themeIcon');
-                const body = document.body;
-
-                // Load saved theme
-                const savedTheme = localStorage.getItem('theme');
-                if (savedTheme === 'light') {
-                    body.classList.add('light-mode');
-                    themeIcon.className = 'fas fa-sun';
-                }
-
-                themeToggle.addEventListener('click', () => {
-                    const isLightMode = body.classList.toggle('light-mode');
-                    
-                    if (isLightMode) {
-                        themeIcon.className = 'fas fa-sun';
-                        localStorage.setItem('theme', 'light');
-                    } else {
-                        themeIcon.className = 'fas fa-moon';
-                        localStorage.setItem('theme', 'dark');
-                    }
-                });
-            }
+        // Fallback: If no cart data, create sample data for testing
+        if (cartData.length === 0) {
+            cartData = [
+                { name: 'Handcrafted Notebook', price: 450, quantity: 1 },
+                { name: 'Wooden Pen Holder', price: 650, quantity: 2 }
+            ];
         }
 
         // Initialize checkout page
-        const checkoutPage = new CheckoutPage();
+        function initCheckout() {
+            const checkoutContent = document.getElementById('checkoutContent');
+            
+            // Generate order summary HTML
+            const orderItemsHTML = cartData.map(item => `
+                <div class="order-item">
+                    <span class="order-item-name">${item.name} x${item.quantity}</span>
+                    <span class="order-item-price">NPR ${item.price * item.quantity}</span>
+                </div>
+            `).join('');
+
+            // Calculate total
+            const total = cartData.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            // Set checkout content
+            checkoutContent.innerHTML = `
+                <div class="checkout-content">
+                    <div class="checkout-form">
+                        <h2>Delivery Information</h2>
+                        <form id="checkoutForm">
+                            <div class="form-group">
+                                <label for="name">Full Name *</label>
+                                <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                                <span class="error-message">Please enter your full name</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="phone">Phone Number *</label>
+                                <input type="tel" id="phone" name="phone" placeholder="+977-98XXXXXXXXX" required>
+                                <span class="error-message">Please enter a valid phone number</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="address">Delivery Address *</label>
+                                <textarea id="address" name="address" placeholder="Enter your complete delivery address" required></textarea>
+                                <span class="error-message">Please enter your delivery address</span>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="order-summary">
+                        <h2>Order Summary</h2>
+                        <div class="order-items">
+                            ${orderItemsHTML}
+                        </div>
+                        <div class="order-total">
+                            <span>Total:</span>
+                            <span class="total-price">NPR ${total}</span>
+                        </div>
+                        <button class="confirm-btn" onclick="confirmOrder()">
+                            <i class="fab fa-whatsapp"></i>
+                            Confirm Order via WhatsApp
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            setupFormValidation();
+        }
+
+        function setupFormValidation() {
+            const form = document.getElementById('checkoutForm');
+            const inputs = form.querySelectorAll('input, textarea');
+            
+            inputs.forEach(input => {
+                input.addEventListener('blur', () => validateField(input));
+                input.addEventListener('input', () => {
+                    if (input.parentElement.classList.contains('error')) {
+                        validateField(input);
+                    }
+                });
+            });
+        }
+
+        function validateField(field) {
+            const formGroup = field.parentElement;
+            const value = field.value.trim();
+
+            formGroup.classList.remove('error');
+
+            if (!value) {
+                formGroup.classList.add('error');
+                return false;
+            }
+
+            if (field.type === 'tel') {
+                const phoneRegex = /^(\+977[-\s]?)?98\d{8}$/;
+                if (!phoneRegex.test(value.replace(/[\s-]/g, ''))) {
+                    formGroup.classList.add('error');
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function validateForm() {
+            const form = document.getElementById('checkoutForm');
+            const inputs = form.querySelectorAll('input[required], textarea[required]');
+            let isValid = true;
+
+            inputs.forEach(input => {
+                if (!validateField(input)) {
+                    isValid = false;
+                }
+            });
+
+            return isValid;
+        }
+
+        function confirmOrder() {
+            if (!validateForm()) {
+                showError('Please fill in all required fields correctly');
+                return;
+            }
+
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const address = document.getElementById('address').value.trim();
+
+            // Build items list for message
+            const itemsList = cartData.map(item => 
+                `${item.name} (x${item.quantity}) - NPR ${item.price * item.quantity}`
+            ).join(', ');
+
+            // Calculate total
+            const total = cartData.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            // Build WhatsApp message
+            const message = `Hello! New order from ${name}, Phone: ${phone}, Address: ${address}, Items: ${itemsList}, Total: NPR ${total}`;
+            
+            // Open WhatsApp
+            const whatsappUrl = `https://wa.me/9779847244773?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function showError(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+                z-index: 10000;
+                font-weight: 600;
+                animation: slideIn 0.3s ease-out;
+                max-width: 300px;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        function setupThemeToggle() {
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const body = document.body;
+
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                body.classList.add('light-mode');
+                themeIcon.className = 'fas fa-sun';
+            }
+
+            themeToggle.addEventListener('click', () => {
+                const isLightMode = body.classList.toggle('light-mode');
+                
+                if (isLightMode) {
+                    themeIcon.className = 'fas fa-sun';
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    themeIcon.className = 'fas fa-moon';
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+        }
 
         // Mobile Navigation
-        const hamburger = document.querySelector('.hamburger');
-        const navMenu = document.querySelector('.nav-menu');
-        const navLinks = document.querySelectorAll('.nav-link');
+        function setupMobileNav() {
+            const hamburger = document.querySelector('.hamburger');
+            const navMenu = document.querySelector('.nav-menu');
+            const navLinks = document.querySelectorAll('.nav-link');
 
-        hamburger.addEventListener('click', () => {
-            hamburger.classList.toggle('active');
-            navMenu.classList.toggle('active');
-        });
-
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                hamburger.classList.remove('active');
-                navMenu.classList.remove('active');
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                navMenu.classList.toggle('active');
             });
-        });
 
-        // Cart functionality
-        document.getElementById('cartIcon').addEventListener('click', () => {
-            window.location.href = 'index.html';
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburger.classList.remove('active');
+                    navMenu.classList.remove('active');
+                });
+            });
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            initCheckout();
+            setupThemeToggle();
+            setupMobileNav();
         });
     </script>
 </body>
