@@ -464,6 +464,10 @@
             loadCheckoutContent() {
                 const cartItems = JSON.parse(localStorage.getItem('cart')) || [];
                 
+                // Debug: Log cart items to console
+                console.log('Cart items loaded:', cartItems);
+                console.log('Cart items length:', cartItems.length);
+                
                 if (cartItems.length === 0) {
                     this.checkoutContent.innerHTML = `
                         <div class="empty-checkout">
