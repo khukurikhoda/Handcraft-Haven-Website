@@ -1,4 +1,3 @@
-// Shopping Cart Management
 class ShoppingCart {
     constructor() {
         this.items = JSON.parse(localStorage.getItem('cart')) || [];
@@ -58,11 +57,9 @@ class ShoppingCart {
     }
 
     updateCartUI() {
-        // Update cart count
         const totalItems = this.items.reduce((total, item) => total + item.quantity, 0);
         this.cartCount.textContent = totalItems;
 
-        // Update cart items
         if (this.items.length === 0) {
             this.cartItems.innerHTML = `
                 <div class="empty-cart">
@@ -93,7 +90,6 @@ class ShoppingCart {
             `).join('');
         }
 
-        // Update total price
         this.totalPrice.textContent = `NPR ${this.getTotal()}`;
     }
 
@@ -140,7 +136,6 @@ class ShoppingCart {
     }
 }
 
-// Theme Toggle
 class ThemeManager {
     constructor() {
         this.themeToggle = document.getElementById('themeToggle');
@@ -174,11 +169,9 @@ class ThemeManager {
     }
 }
 
-// Initialize cart and theme
 const cart = new ShoppingCart();
 const themeManager = new ThemeManager();
 
-// Cart event listeners
 document.getElementById('cartIcon').addEventListener('click', () => cart.openCart());
 document.getElementById('closeCart').addEventListener('click', () => cart.closeCart());
 document.getElementById('overlay').addEventListener('click', () => cart.closeCart());
@@ -186,7 +179,6 @@ document.getElementById('checkoutBtn').addEventListener('click', () => {
     window.location.href = 'checkout.html';
 });
 
-// Mobile Navigation Toggle
 const hamburger = document.querySelector('.hamburger');
 const navMenu = document.querySelector('.nav-menu');
 const navLinks = document.querySelectorAll('.nav-link');
@@ -203,12 +195,10 @@ navLinks.forEach(link => {
     });
 });
 
-// Add to Cart function
 function addToCart(name, price) {
     cart.addItem(name, price);
 }
 
-// WhatsApp Order Function (for checkout)
 function orderViaWhatsApp(customerDetails, orderItems) {
     const phoneNumber = '+9779847244773';
     
@@ -235,12 +225,12 @@ ${itemsList}
 Thank you for your order! 🎉`;
     
     const encodedMessage = encodeURIComponent(message);
+    
     const whatsappUrl = `https://wa.me/${phoneNumber.replace('+', '')}?text=${encodedMessage}`;
     
     window.open(whatsappUrl, '_blank');
 }
 
-// Smooth Scroll for Navigation Links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -258,7 +248,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Active Navigation Link on Scroll
 window.addEventListener('scroll', () => {
     const sections = document.querySelectorAll('section');
     const scrollY = window.pageYOffset;
@@ -279,7 +268,6 @@ window.addEventListener('scroll', () => {
     });
 });
 
-// Navbar Background on Scroll
 window.addEventListener('scroll', () => {
     const navbar = document.querySelector('.navbar');
     if (window.scrollY > 50) {
@@ -291,7 +279,6 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// Product Card Hover Effects
 document.addEventListener('DOMContentLoaded', () => {
     const productCards = document.querySelectorAll('.product-card');
     
@@ -306,7 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Button Click Effects
 document.querySelectorAll('button').forEach(button => {
     button.addEventListener('click', function(e) {
         const ripple = document.createElement('span');
@@ -351,7 +337,6 @@ document.querySelectorAll('button').forEach(button => {
     });
 });
 
-// Loading Animation for Images
 function lazyLoadImages() {
     const images = document.querySelectorAll('img[data-src]');
     const imageObserver = new IntersectionObserver((entries, observer) => {
@@ -368,7 +353,6 @@ function lazyLoadImages() {
     images.forEach(img => imageObserver.observe(img));
 }
 
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     lazyLoadImages();
     
@@ -394,7 +378,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Keyboard Navigation Support
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         hamburger.classList.remove('active');
@@ -411,7 +394,6 @@ document.addEventListener('mousedown', () => {
     document.body.classList.remove('keyboard-nav');
 });
 
-// Performance Optimization - Debounce scroll events
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -425,16 +407,13 @@ function debounce(func, wait) {
 }
 
 const optimizedScroll = debounce(() => {
-    // Scroll-related functions here
 }, 10);
 
 window.addEventListener('scroll', optimizedScroll);
 
-// Error Handling
 window.addEventListener('error', (e) => {
     console.error('An error occurred:', e.error);
 });
 
-// Console Welcome Message
 console.log('%c🎨 Welcome to Handcraft Haven!', 'color: #8b5cf6; font-size: 20px; font-weight: bold;');
 console.log('%cExplore our handcrafted collection and add to cart!', 'color: #ec4899; font-size: 14px;');
